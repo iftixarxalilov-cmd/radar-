@@ -3,42 +3,54 @@ name: Radar APK
 
 on:
   push:
-    paths:
-      - 'AzerbaycanRadar-v4-Duzeldilmis.zip'
-      - '.github/workflows/build-apk.yml'
+    branches: [main]
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+
+    env:
+      ANDROID_HOME: /usr/local/lib/android/sdk
+      ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+
     steps:
-    
-      - uses: android-actions/setup-android@v3
+      - name: Kodlari gotur
+        uses: actions/checkout@v4
 
-      - name: SDK
-        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+      - name: ZIP faylini ac
+        run: |
+          unzip -q AzerbaycanRadar-v4-Duzeldilmis.zip -d project
+          test -f project/app/build.gradle
 
-
-      - uses: actions/setup-java@v4
+      - name: Java 17 qurasdir
+        uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
 
-      - uses: gradle/actions/setup-gradle@v4
+      - name: Gradle 8.9 qurasdir
+        uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
 
-      - uses: android-actions/setup-android@v3
+      - name: Android SDK 35 hazirla
+        run: |
+          export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH"
+          yes | sdkmanager --licenses > /dev/null || true
+          sdkmanager "platforms;android-35" "build-tools;35.0.0"
 
-      - name: SDK
-        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
-
-      - name: APK hazirla
+      - name: Radar APK hazirla
         working-directory: project
-        run: gradle --no-daemon :app:assembleDebug
+        run: gradle --no-daemon --stacktrace :app:assembleDebug
 
-      - uses: actions/upload-artifact@v4
+      - name: APK faylini yukle
+        uses: actions/upload-artifact@v4
         with:
-          name: Radar-APK
+          name: Azerbaycan-Radar-v4-APK
           path: project/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
+          retention-days: 14
