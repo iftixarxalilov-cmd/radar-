@@ -1,0 +1,42 @@
+
+name: Radar APK
+
+on:
+  push:
+    paths:
+      - 'AzerbaycanRadar-v4-Duzeldilmis.zip'
+      - '.github/workflows/build-apk.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: ZIP ac
+        run: unzip AzerbaycanRadar-v4-Duzeldilmis.zip -d project
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - uses: android-actions/setup-android@v3
+
+      - name: SDK
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+
+      - name: APK hazirla
+        working-directory: project
+        run: gradle --no-daemon :app:assembleDebug
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Radar-APK
+          path: project/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
